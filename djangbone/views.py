@@ -36,8 +36,7 @@ class BackboneAPIView(View):
         delete -> DELETE /collection/id
     """
     base_queryset = None        # Queryset to use for all data accesses, eg. User.objects.all()
-    serialize_fields = tuple()  # Tuple of field names that should appear in json output
-
+    serialize_fields = tuple()  # Tuple of field names that should appear in json output    serialize_attrs = tuple()   # Tuple of attributes (separated by '.') to appear in json output
     # Optional pagination settings:
     page_size = None            # Set to an integer to enable GET pagination (at the specified page size)
     page_param_name = 'p'       # HTTP GET parameter to use for accessing pages (eg. /widgets?p=2)
@@ -158,9 +157,11 @@ class BackboneAPIView(View):
         single JSON object, otherwise return a JSON array of objects.
         """
         values = queryset.values(*self.serialize_fields)
+
         if single_object or self.kwargs.get('id'):
             # For single-item requests, convert ValuesQueryset to a dict simply
             # by slicing the first item:
+            values = self.get_attrs(queryset, values)
             json_output = self.json_encoder.encode(values[0])
         else:
             # Process pagination options if they are enabled:
@@ -171,9 +172,32 @@ class BackboneAPIView(View):
                 except ValueError:
                     offset = 0
                 values = values[offset:offset+self.page_size]
+                values = self.get_attrs(queryset[offset:offset+self.page_size], values)
+            else:
+                values = self.get_attrs(queryset, values)
             json_output = self.json_encoder.encode(list(values))
         return json_output
 
+    def get_attrs(self, queryset, values):
+        values2 = []
+        if self.serialize_attrs:
+            i = 0
+            for obj in queryset:
+                val = values[i]
+                for path in self.serialize_attrs:
+                    out = obj
+                    for attr in path.split('.'):
+                        out = out.__getattribute__(attr)
+                        if hasattr(out, '__call__'):
+                            out = out()
+                    val[path] = out
+                values2.append(val)
+                i += 1
+        else:
+            values2 = values
+        print values2
+        return values2
+                       
     def success_response(self, output):
         """
         Convert json output to an HttpResponse object, with the correct mimetype.
