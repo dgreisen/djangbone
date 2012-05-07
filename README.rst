@@ -100,11 +100,11 @@ Serialization
 -------------
 
 You can customize what data is serialized for each object through two attributes.
-``BackboneAPIView.serialize_fields`` accepts a list of fields to serialize. You
+``BackboneAPIView.serialize_fields`` accepts a tuple of fields to serialize. You
 can include joins with the standard django "__" (two underscores). 
-``BackboneAPIView.serialize_attrs`` accepts a list of attributes/methods to serialize.
+``BackboneAPIView.serialize_attrs`` accepts a tuple of attributes/methods to serialize.
 You can traverse objects using a dot notation (e.g. "teacher.students.get_average_gpa").
-Any object with an __class__ method will be called with no args before attempting 
+Any object with an __call__ method will be called with no args before attempting 
 further traversal. This is not as efficient as serialize_fields, and should be used
 sparingly.
 
