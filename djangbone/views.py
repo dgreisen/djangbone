@@ -1,6 +1,7 @@
 import datetime
 import decimal
 import json
+from django.db.models import Model
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404
@@ -13,13 +14,15 @@ class DjangboneJSONEncoder(json.JSONEncoder):
     """
     def default(self, obj):
         """
-        Converts datetime objects to ISO-compatible strings during json serialization.
+        Converts datetime, date, and time objects to ISO-compatible strings during json serialization.
         Converts Decimal objects to floats during json serialization.
         """
-        if isinstance(obj, datetime.datetime):
+        if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date) or isinstance(obj, datetime.time) :
             return obj.isoformat()
         elif isinstance(obj, decimal.Decimal):
             return float(obj)
+        elif isinstance(obj, Model):
+            return obj.pk
         else:
             return None
 
@@ -149,7 +152,13 @@ class BackboneAPIView(View):
             return self.success_response(output)
         else:
             raise Http404
-
+    
+    def raw_data(self):
+        queryset = self.base_queryset
+        values = queryset.values(*self.serialize_fields)
+        values = self.get_attrs(queryset, values)
+        return values
+        
     def serialize_qs(self, queryset, single_object=False):
         """
         Serialize a queryset into a JSON object that can be consumed by backbone.js.
@@ -187,7 +196,7 @@ class BackboneAPIView(View):
         if self.serialize_attrs:
             for obj, val in zip(queryset, values):
                 for path in self.serialize_attrs:
-                    for attr in path.split('.'):
+                    for attr in path.split('__'):
                         obj = obj.__getattribute__(attr)
                         if hasattr(obj, '__call__'): obj = obj()
                     val[path] = obj
