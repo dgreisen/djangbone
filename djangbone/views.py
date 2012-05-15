@@ -153,11 +153,17 @@ class BackboneAPIView(View):
         else:
             raise Http404
     
-    def raw_data(self):
+    def raw_data(self, id=None):
         queryset = self.base_queryset
+        if id:
+          queryset = queryset.filter(id=id)
+          assert len(queryset) == 1
         values = queryset.values(*self.serialize_fields)
         values = self.get_attrs(queryset, values)
-        return values
+        if id:
+          return values[0]
+        else:
+          return list(values)
         
     def serialize_qs(self, queryset, single_object=False):
         """
