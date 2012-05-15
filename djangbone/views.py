@@ -202,10 +202,11 @@ class BackboneAPIView(View):
         if self.serialize_attrs:
             for obj, val in zip(queryset, values):
                 for path in self.serialize_attrs:
+                    ob = obj
                     for attr in path.split('__'):
-                        obj = obj.__getattribute__(attr)
-                        if hasattr(obj, '__call__'): obj = obj()
-                    val[path] = obj
+                        ob = ob.__getattribute__(attr)
+                        if hasattr(ob, '__call__'): ob = ob()
+                    val[path] = ob
                 values2.append(val)
             values = values2
         return values
