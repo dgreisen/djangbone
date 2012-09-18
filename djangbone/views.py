@@ -2,7 +2,7 @@ import datetime
 import decimal
 import json
 from django.db.models import Model
-
+from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404
 from django.views.generic import View
@@ -17,8 +17,12 @@ class DjangboneJSONEncoder(json.JSONEncoder):
         Converts datetime, date, and time objects to ISO-compatible strings during json serialization.
         Converts Decimal objects to floats during json serialization.
         """
-        if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date) or isinstance(obj, datetime.time) :
-            return obj.isoformat()
+        if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date) or isinstance(obj, datetime.time):
+            if isinstance(obj, datetime.datetime):
+                print "converting!!", obj, obj.tzinfo
+                obj = obj.astimezone(timezone.get_current_timezone())
+                print obj, obj.tzinfo
+            return obj.strftime("%Y-%m-%d %H:%M")
         elif isinstance(obj, decimal.Decimal):
             return float(obj)
         elif isinstance(obj, Model):
