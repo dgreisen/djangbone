@@ -82,7 +82,7 @@ class BackboneAPIView(View):
         """
         Handle a GET request for a full collection (when no id was provided).
         """
-        qs = self.base_queryset
+        qs = self.get_base_queryset(*args, **kwargs) if hasattr(self, "get_base_queryset") else self.base_queryset
         output = self.serialize_qs(qs)
         return self.success_response(output)
 
@@ -157,11 +157,13 @@ class BackboneAPIView(View):
         else:
             raise Http404
     
-    def raw_data(self, id=None):
+    def raw_data(self, id=None, *args, **kwargs):
         queryset = self.base_queryset
         if id:
-          queryset = queryset.filter(id=id)
-          assert len(queryset) == 1
+            queryset = queryset.filter(id=id)
+            assert len(queryset) == 1
+        else:
+            queryset = self.get_base_queryset(*args, **kwargs) if hasattr(self, "get_base_queryset") else self.base_queryset
         values = queryset.values(*self.serialize_fields)
         values = self.get_attrs(queryset, values)
         if id:
