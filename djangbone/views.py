@@ -22,7 +22,7 @@ class DjangboneJSONEncoder(json.JSONEncoder):
                 print "converting!!", obj, obj.tzinfo
                 obj = obj.astimezone(timezone.get_current_timezone())
                 print obj, obj.tzinfo
-            return obj.strftime("%Y-%m-%d %H:%M %z")
+            return obj.strftime("%b %d, %Y %H:%M GMT-%z")
         elif isinstance(obj, decimal.Decimal):
             return float(obj)
         elif isinstance(obj, Model):
